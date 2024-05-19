@@ -225,6 +225,9 @@ public class ObjectDetector: Predictor {
     }
     
     public func predictOnImage(image: CIImage, completion: ([[String:Any]]) -> Void) {
+        let orientation = image.properties["Orientation"] as? Int32
+        print("imageOrientation: \(orientation)")   
+
         let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
         let request = VNCoreMLRequest(model: detector)
         var recognitions: [[String:Any]] = []
@@ -233,36 +236,22 @@ public class ObjectDetector: Predictor {
         //let screenHeight = self.screenSize?.height ?? 852
         let imageWidth = image.extent.width
         let imageHeight = image.extent.height
-
-        let newHeight =imageWidth;
-        let newWidth = imageHeight;
-        let screenRatio=1;
+        let screenRatio=1.0;
         //let scaleFactor = screenWidth / imageWidth
         //let newHeight = imageHeight * scaleFactor
         //let screenRatio: CGFloat = (screenHeight / screenWidth) / (4.0 / 3.0)  // .photo    
         do {
             try requestHandler.perform([request])
             if let results = request.results as? [VNRecognizedObjectObservation] {
-                for i in 0..<100 {
+                for i in 0..<self.numItemsThreshold  {
                     if i < results.count && i < self.numItemsThreshold {
-                        let prediction = results[i]
-                        
+                        let prediction = results[i]                        
                         var rect = prediction.boundingBox  // normalized xywh, origin lower left
-                        print("rect: \(rect)")
-                        
-                        if screenRatio >= 1 { // iPhone ratio = 1.218
-                            let offset = (1 - screenRatio) * (0.5 - rect.minX)
-                            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: offset, y: -1)
-                            rect = rect.applying(transform)
-                            //rect.size.width *= screenRatio
-                        } else { // iPad ratio = 0.75
-                            let offset = (screenRatio - 1) * (0.5 - rect.maxY)
-                            let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: offset - 1)
-                            rect = rect.applying(transform)
-                            rect.size.height /= screenRatio
-                        }
+                        print("rect: \(rect)")                       
+                        let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -1)
+                        rect = rect.applying(transform)        
 
-                        rect = VNImageRectForNormalizedRect(rect, Int(screenWidth), Int(newHeight))
+                        rect = VNImageRectForNormalizedRect(rect, Int(imageWidth), Int(imageHeight))
                         print("rect: \(rect)")
                         
                         // The labels array is a list of VNClassificationObservation objects,
