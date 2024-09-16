@@ -73,12 +73,22 @@ public class TfliteDetector extends Detector {
     public void loadModel(YoloModel yoloModel, boolean useGpu) throws Exception {
         if (yoloModel instanceof LocalYoloModel) {
             final LocalYoloModel localYoloModel = (LocalYoloModel) yoloModel;
-
-            if (localYoloModel.modelPath == null || localYoloModel.modelPath.isEmpty() ||
-                    localYoloModel.metadataPath == null || localYoloModel.metadataPath.isEmpty()) {
+            if ((localYoloModel.modelPath == null || localYoloModel.modelPath.isEmpty())&&
+                    (localYoloModel.byteCodeByte == null || localYoloModel.byteCodeByte.length == 0)) {
                 throw new Exception();
             }
-
+            if (localYoloModel.metadataPath == null || localYoloModel.metadataPath.isEmpty()) {
+                throw new Exception();
+            }
+            if(localYoloModel.byteCodeByte!=null&&localYoloModel.byteCodeByte.length>0){
+                try {
+                    MappedByteBuffer modelFile = loadModelFile(localYoloModel.byteCodeByte);
+                    initDelegate(modelFile, useGpu);
+                    return;
+                } catch (Exception e) {
+                    throw new PredictorException("Error model");
+                }
+            }
             final AssetManager assetManager = context.getAssets();
             loadLabels(assetManager, localYoloModel.metadataPath);
             numClasses = labels.size();
@@ -149,6 +159,39 @@ public class TfliteDetector extends Detector {
             long declaredLength = fileChannel.size();
             return fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, declaredLength);
         }
+    }
+    private MappedByteBuffer loadModelFile(byte[] modelData) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocateDirect(modelData.length);
+        buffer.put(modelData);
+        buffer.rewind();
+        return buffer;
+    }
+
+    private void initDelegate(MappedByteBuffer buffer, boolean useGpu) {
+        Interpreter.Options interpreterOptions = new Interpreter.Options();
+        try {
+            // Check if GPU support is available
+            CompatibilityList compatibilityList = new CompatibilityList();
+            if (useGpu && compatibilityList.isDelegateSupportedOnThisDevice()) {
+                GpuDelegateFactory.Options delegateOptions = compatibilityList.getBestOptionsForThisDevice();
+                GpuDelegate gpuDelegate = new GpuDelegate(delegateOptions.setQuantizedModelsAllowed(true));
+                interpreterOptions.addDelegate(gpuDelegate);
+            } else {
+            interpreterOptions.setNumThreads(4);
+            }
+            // Create the interpreter
+            this.interpreter = new Interpreter(buffer, interpreterOptions);
+        } catch (Exception e) {
+            interpreterOptions = new Interpreter.Options();
+            interpreterOptions.setNumThreads(4);
+            // Create the interpreter
+            this.interpreter = new Interpreter(buffer, interpreterOptions);
+        }
+
+        int[] outputShape = interpreter.getOutputTensor(0).shape();
+        outputShape2 = outputShape[1];
+        outputShape3 = outputShape[2];
+        output = new float[outputShape2][outputShape3];
     }
 
     private void initDelegate(MappedByteBuffer buffer, boolean useGpu) {

@@ -85,6 +85,7 @@ class LocalYoloModel extends YoloModel {
     required super.task,
     required super.format,
     this.metadataPath,
+    this.byteCodeByte,
   }) : super(type: Type.local);
 
   /// Path where the local custom model is stored.
@@ -93,12 +94,15 @@ class LocalYoloModel extends YoloModel {
   /// Path where the local custom model metadata is stored.
   final String? metadataPath;
 
+  final List<int>? byteCodeByte;
+
   /// Returns a json representation of an instance of [LocalYoloModel].
   @override
   Map<String, dynamic> toJson() => {
         ...super.toJson(),
         'modelPath': modelPath,
         'metadataPath': metadataPath,
+        'byteCodeByte': byteCodeByte,
       };
 }
 
