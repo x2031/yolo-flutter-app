@@ -75,18 +75,16 @@ public class TfliteDetector extends Detector {
             final LocalYoloModel localYoloModel = (LocalYoloModel) yoloModel;
 
             if (localYoloModel.modelPath == null || localYoloModel.modelPath.isEmpty() ||
-            localYoloModel.metadataPath == null || localYoloModel.metadataPath.isEmpty()) {
+                    localYoloModel.metadataPath == null || localYoloModel.metadataPath.isEmpty()) {
                 throw new Exception();
             }
-    
+
             final AssetManager assetManager = context.getAssets();
             loadLabels(assetManager, localYoloModel.metadataPath);
             numClasses = labels.size();
             try {
                 MappedByteBuffer modelFile = loadModelFile(assetManager, localYoloModel.modelPath);
-                
                 modelFile.limit(modelFile.limit() - 10);
-
                 initDelegate(modelFile, useGpu);
             } catch (Exception e) {
                 throw new PredictorException("Error model");
@@ -153,6 +151,7 @@ public class TfliteDetector extends Detector {
             return fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, declaredLength);
         }
     }
+
     private void initDelegate(MappedByteBuffer buffer, boolean useGpu) {
         Interpreter.Options interpreterOptions = new Interpreter.Options();
         try {
