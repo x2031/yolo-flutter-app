@@ -79,14 +79,13 @@ abstract class YoloModel {
 /// Ultralytics YOLO model.
 class LocalYoloModel extends YoloModel {
   /// Constructor to create an instance of [LocalYoloModel].
-  LocalYoloModel({
-    required super.id,
-    required this.modelPath,
-    required super.task,
-    required super.format,
-    this.metadataPath,
-    this.byteCodeByte,
-  }) : super(type: Type.local);
+  LocalYoloModel(
+      {required super.id,
+      required this.modelPath,
+      required super.task,
+      required super.format,
+      this.metadataPath})
+      : super(type: Type.local);
 
   /// Path where the local custom model is stored.
   final String modelPath;
@@ -94,16 +93,10 @@ class LocalYoloModel extends YoloModel {
   /// Path where the local custom model metadata is stored.
   final String? metadataPath;
 
-  final List<int>? byteCodeByte;
-
   /// Returns a json representation of an instance of [LocalYoloModel].
   @override
-  Map<String, dynamic> toJson() => {
-        ...super.toJson(),
-        'modelPath': modelPath,
-        'metadataPath': metadataPath,
-        'byteCodeByte': byteCodeByte,
-      };
+  Map<String, dynamic> toJson() =>
+      {...super.toJson(), 'modelPath': modelPath, 'metadataPath': metadataPath};
 }
 
 /// Options to configure the detector while using a remote

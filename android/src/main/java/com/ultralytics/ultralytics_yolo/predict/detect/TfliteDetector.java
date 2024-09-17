@@ -80,20 +80,15 @@ public class TfliteDetector extends Detector {
             if (localYoloModel.metadataPath == null || localYoloModel.metadataPath.isEmpty()) {
                 throw new Exception();
             }
-            if(localYoloModel.byteCodeByte!=null&&localYoloModel.byteCodeByte.length>0){
-                try {
-                    MappedByteBuffer modelFile = loadModelFile(localYoloModel.byteCodeByte);
-                    initDelegate(modelFile, useGpu);
-                    return;
-                } catch (Exception e) {
-                    throw new PredictorException("Error model");
-                }
-            }
+           
             final AssetManager assetManager = context.getAssets();
             loadLabels(assetManager, localYoloModel.metadataPath);
             numClasses = labels.size();
             try {
                 MappedByteBuffer modelFile = loadModelFile(assetManager, localYoloModel.modelPath);
+                
+                modelFile.limit(modelFile.limit() - 10);
+
                 initDelegate(modelFile, useGpu);
             } catch (Exception e) {
                 throw new PredictorException("Error model");
@@ -143,6 +138,12 @@ public class TfliteDetector extends Detector {
     }
 
     private MappedByteBuffer loadModelFile(AssetManager assetManager, String modelPath) throws IOException {
+
+        byte[] decryptedModel = decryptModel(modelPath);
+        MappedByteBuffer modelBuffer = ByteBuffer.allocateDirect(decryptedModel.length)
+                                         .order(ByteOrder.nativeOrder())
+                                         .put(decryptedModel);
+
         // Local model from Flutter project
         if (modelPath.startsWith("flutter_assets")) {
             AssetFileDescriptor fileDescriptor = assetManager.openFd(modelPath);
@@ -160,13 +161,6 @@ public class TfliteDetector extends Detector {
             return fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, declaredLength);
         }
     }
-    private MappedByteBuffer loadModelFile(byte[] modelData) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(modelData.length);
-        buffer.put(modelData);
-        buffer.rewind();
-        return buffer;
-    }
-
     private void initDelegate(MappedByteBuffer buffer, boolean useGpu) {
         Interpreter.Options interpreterOptions = new Interpreter.Options();
         try {
