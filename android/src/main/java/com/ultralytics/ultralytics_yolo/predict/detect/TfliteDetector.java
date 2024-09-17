@@ -73,7 +73,7 @@ public class TfliteDetector extends Detector {
     public void loadModel(YoloModel yoloModel, boolean useGpu) throws Exception {
         if (yoloModel instanceof LocalYoloModel) {
             final LocalYoloModel localYoloModel = (LocalYoloModel) yoloModel;
-            
+
             if (localYoloModel.modelPath == null || localYoloModel.modelPath.isEmpty() ||
             localYoloModel.metadataPath == null || localYoloModel.metadataPath.isEmpty()) {
                 throw new Exception();
@@ -136,12 +136,6 @@ public class TfliteDetector extends Detector {
     }
 
     private MappedByteBuffer loadModelFile(AssetManager assetManager, String modelPath) throws IOException {
-
-        byte[] decryptedModel = decryptModel(modelPath);
-        MappedByteBuffer modelBuffer = ByteBuffer.allocateDirect(decryptedModel.length)
-                                         .order(ByteOrder.nativeOrder())
-                                         .put(decryptedModel);
-
         // Local model from Flutter project
         if (modelPath.startsWith("flutter_assets")) {
             AssetFileDescriptor fileDescriptor = assetManager.openFd(modelPath);
