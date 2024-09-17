@@ -73,14 +73,12 @@ public class TfliteDetector extends Detector {
     public void loadModel(YoloModel yoloModel, boolean useGpu) throws Exception {
         if (yoloModel instanceof LocalYoloModel) {
             final LocalYoloModel localYoloModel = (LocalYoloModel) yoloModel;
-            if ((localYoloModel.modelPath == null || localYoloModel.modelPath.isEmpty())&&
-                    (localYoloModel.byteCodeByte == null || localYoloModel.byteCodeByte.length == 0)) {
+            
+            if (localYoloModel.modelPath == null || localYoloModel.modelPath.isEmpty() ||
+            localYoloModel.metadataPath == null || localYoloModel.metadataPath.isEmpty()) {
                 throw new Exception();
             }
-            if (localYoloModel.metadataPath == null || localYoloModel.metadataPath.isEmpty()) {
-                throw new Exception();
-            }
-           
+    
             final AssetManager assetManager = context.getAssets();
             loadLabels(assetManager, localYoloModel.metadataPath);
             numClasses = labels.size();
